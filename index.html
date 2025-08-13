@@ -42,7 +42,13 @@
 
         const MenopauseTracker = () => {
             const [entries, setEntries] = useState([]);
-            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+          const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+});
             const [currentEntry, setCurrentEntry] = useState(null);
             const [showTrends, setShowTrends] = useState(false);
             const [showInstructions, setShowInstructions] = useState(false);
@@ -369,7 +375,7 @@
                                 </button>
                                 <div className="text-center">
                                     <div className="text-lg font-semibold text-gray-800">
-                                        {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                        {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                                     </div>
                                     <input
                                         type="date"
