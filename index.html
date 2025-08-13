@@ -8,14 +8,14 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
-        body { -webkit-overflow-scrolling: touch; overscroll-behavior: none; }
+        body { -webkit-overflow-scrolling: touch; overscroll-behavior: none; margin: 0; }
         button, input[type="range"] { touch-action: manipulation; }
         .data-warning {
             position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.8);
             color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 12px; z-index: 1000;
         }
+        .lucide { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; }
     </style>
 </head>
 <body>
@@ -26,7 +26,34 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { ChevronLeft, ChevronRight, BarChart3, FileDown } = lucide;
+        
+        // Simple icon components
+        const ChevronLeft = () => (
+            <svg className="lucide" viewBox="0 0 24 24">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+        );
+        
+        const ChevronRight = () => (
+            <svg className="lucide" viewBox="0 0 24 24">
+                <path d="m9 18 6-6-6-6"/>
+            </svg>
+        );
+        
+        const BarChart3 = () => (
+            <svg className="lucide" viewBox="0 0 24 24">
+                <path d="M3 3v18h18"/>
+                <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+        );
+        
+        const FileDown = () => (
+            <svg className="lucide" viewBox="0 0 24 24">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <path d="m12 18-4-4h3V9h2v5h3l-4 4z"/>
+            </svg>
+        );
 
         const MenopauseTracker = () => {
             const [entries, setEntries] = useState([]);
@@ -66,19 +93,26 @@
                     
                     const hasSeenWarning = localStorage.getItem('menopause-seen-warning');
                     if (!hasSeenWarning) {
-                        document.getElementById('data-notification').style.display = 'block';
-                        setTimeout(() => {
-                            document.getElementById('data-notification').style.display = 'none';
-                            localStorage.setItem('menopause-seen-warning', 'true');
-                        }, 5000);
+                        const notification = document.getElementById('data-notification');
+                        if (notification) {
+                            notification.style.display = 'block';
+                            setTimeout(() => {
+                                notification.style.display = 'none';
+                                localStorage.setItem('menopause-seen-warning', 'true');
+                            }, 5000);
+                        }
                     }
-                } catch (e) { console.error('Loading error:', e); }
+                } catch (e) { 
+                    console.log('Loading data...'); 
+                }
             }, []);
 
             useEffect(() => {
                 try {
                     localStorage.setItem('menopause-tracker-data', JSON.stringify(entries));
-                } catch (e) { console.error('Saving error:', e); }
+                } catch (e) { 
+                    console.log('Saving data...'); 
+                }
             }, [entries]);
 
             useEffect(() => {
@@ -86,7 +120,9 @@
                 setCurrentEntry(todayEntry || {
                     date: selectedDate,
                     symptoms: symptoms.reduce((acc, s) => ({ ...acc, [s.id]: 0 }), {}),
-                    mood: 3, triggers: [], notes: ''
+                    mood: 3, 
+                    triggers: [], 
+                    notes: ''
                 });
             }, [selectedDate, entries]);
 
@@ -132,14 +168,14 @@
 
                 const csv = entries.sort((a, b) => new Date(a.date) - new Date(b.date)).map(entry => ({
                     Date: entry.date,
-                    'Hot Flashes (0-5)': entry.symptoms.hotFlashes || 0,
-                    'Sleep Quality (0-5)': entry.symptoms.sleep || 0,
+                    'Hot Flashes (0-5)': entry.symptoms?.hotFlashes || 0,
+                    'Sleep Quality (0-5)': entry.symptoms?.sleep || 0,
                     'Mood (1-5)': entry.mood || 3,
-                    'Brain Fog (0-5)': entry.symptoms.brainFog || 0,
-                    'Irritability (0-5)': entry.symptoms.irritability || 0,
-                    'Energy Level (0-5)': entry.symptoms.energy || 0,
-                    'Joint Aches (0-5)': entry.symptoms.jointAches || 0,
-                    'Heart Racing (0-5)': entry.symptoms.heartPalpitations || 0,
+                    'Brain Fog (0-5)': entry.symptoms?.brainFog || 0,
+                    'Irritability (0-5)': entry.symptoms?.irritability || 0,
+                    'Energy Level (0-5)': entry.symptoms?.energy || 0,
+                    'Joint Aches (0-5)': entry.symptoms?.jointAches || 0,
+                    'Heart Racing (0-5)': entry.symptoms?.heartPalpitations || 0,
                     'Triggers': (entry.triggers || []).join('; '),
                     'Notes': entry.notes || ''
                 }));
@@ -170,7 +206,7 @@
             const getSymptomTrend = (symptomId) => {
                 const recent = entries.filter(e => e.date <= selectedDate).slice(-7);
                 if (recent.length < 3) return null;
-                const values = recent.map(e => e.symptoms[symptomId] || 0);
+                const values = recent.map(e => e.symptoms?.[symptomId] || 0);
                 const first = values.slice(0, Math.ceil(values.length/2)).reduce((a,b) => a+b, 0) / Math.ceil(values.length/2);
                 const last = values.slice(Math.floor(values.length/2)).reduce((a,b) => a+b, 0) / (values.length - Math.floor(values.length/2));
                 return last > first + 0.5 ? 'up' : last < first - 0.5 ? 'down' : 'stable';
@@ -235,7 +271,7 @@
                                 <div className="bg-purple-50 p-4 rounded-lg">
                                     <h3 className="font-semibold text-purple-800 mb-2">📌 On Computer:</h3>
                                     <ol className="list-decimal list-inside text-purple-700 space-y-1 text-sm">
-                                        <li>Bookmark this page (Ctrl+D)</li>
+                                        <li>Bookmark this page (Cmd+D)</li>
                                         <li>Always use the same browser</li>
                                         <li>Don't clear browser data</li>
                                     </ol>
@@ -284,7 +320,7 @@
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                         {symptoms.map(symptom => {
                                             const avg = entries.length > 0 ? 
-                                                (entries.reduce((sum, e) => sum + (e.symptoms[symptom.id] || 0), 0) / entries.length).toFixed(1) : 0;
+                                                (entries.reduce((sum, e) => sum + (e.symptoms?.[symptom.id] || 0), 0) / entries.length).toFixed(1) : 0;
                                             return (
                                                 <div key={symptom.id} className={`p-4 rounded-xl ${symptom.color}`}>
                                                     <div className="flex items-center gap-2 mb-2">
@@ -333,7 +369,7 @@
                         <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">
                             <div className="flex items-center justify-between">
                                 <button onClick={() => changeDate(-1)} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg">
-                                    <ChevronLeft className="w-5 h-5" />
+                                    <ChevronLeft />
                                 </button>
                                 <div className="text-center">
                                     <div className="text-lg font-semibold text-gray-800">
@@ -351,7 +387,7 @@
                                     className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
                                     disabled={selectedDate >= new Date().toISOString().split('T')[0]}
                                 >
-                                    <ChevronRight className="w-5 h-5" />
+                                    <ChevronRight />
                                 </button>
                             </div>
                         </div>
@@ -362,14 +398,14 @@
                                 onClick={() => setShowTrends(true)}
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-1 text-sm"
                             >
-                                <BarChart3 className="w-4 h-4" />
+                                <BarChart3 />
                                 Trends
                             </button>
                             <button
                                 onClick={exportData}
                                 className="bg-white text-purple-600 py-3 rounded-xl font-medium flex items-center justify-center gap-1 shadow-lg text-sm"
                             >
-                                <FileDown className="w-4 h-4" />
+                                <FileDown />
                                 Export
                             </button>
                             <button
@@ -407,7 +443,7 @@
                                 <IntensitySlider
                                     key={symptom.id}
                                     symptom={symptom}
-                                    value={currentEntry?.symptoms[symptom.id] || 0}
+                                    value={currentEntry?.symptoms?.[symptom.id] || 0}
                                     onChange={updateSymptom}
                                 />
                             ))}
@@ -422,7 +458,7 @@
                                         key={trigger}
                                         onClick={() => toggleTrigger(trigger)}
                                         className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                                            currentEntry?.triggers.includes(trigger)
+                                            currentEntry?.triggers?.includes(trigger)
                                                 ? 'bg-orange-500 text-white shadow-md'
                                                 : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                                         }`}
@@ -476,7 +512,16 @@
             );
         };
 
-        ReactDOM.render(React.createElement(MenopauseTracker), document.getElementById('root'));
+        // Wait for React to load, then render
+        function renderApp() {
+            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+                ReactDOM.render(React.createElement(MenopauseTracker), document.getElementById('root'));
+            } else {
+                setTimeout(renderApp, 100);
+            }
+        }
+        
+        renderApp();
     </script>
 </body>
 </html>
