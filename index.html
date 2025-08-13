@@ -27,33 +27,18 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
         
-        // Simple icon components
-        const ChevronLeft = () => (
-            <svg className="lucide" viewBox="0 0 24 24">
-                <path d="m15 18-6-6 6-6"/>
-            </svg>
-        );
-        
-        const ChevronRight = () => (
-            <svg className="lucide" viewBox="0 0 24 24">
-                <path d="m9 18 6-6-6-6"/>
-            </svg>
-        );
-        
-        const BarChart3 = () => (
-            <svg className="lucide" viewBox="0 0 24 24">
-                <path d="M3 3v18h18"/>
-                <path d="m19 9-5 5-4-4-3 3"/>
-            </svg>
-        );
-        
-        const FileDown = () => (
-            <svg className="lucide" viewBox="0 0 24 24">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                <polyline points="14,2 14,8 20,8"/>
-                <path d="m12 18-4-4h3V9h2v5h3l-4 4z"/>
-            </svg>
-        );
+        const ChevronLeft = () => (<svg className="lucide" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>);
+        const ChevronRight = () => (<svg className="lucide" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>);
+        const BarChart3 = () => (<svg className="lucide" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>);
+        const FileDown = () => (<svg className="lucide" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/><path d="m12 18-4-4h3V9h2v5h3l-4 4z"/></svg>);
+
+        const dailyTips = [
+            "Research shows that keeping your bedroom between 60-67°F can significantly improve sleep quality during menopause.",
+            "Studies suggest that 10 minutes of morning sunlight exposure helps regulate circadian rhythms and may reduce mood swings.",
+            "Clinical trials indicate that staying hydrated with 8-10 glasses of water daily can reduce the frequency of hot flashes.",
+            "Evidence suggests that deep breathing exercises can reduce hot flash intensity by up to 44%.",
+            "Research demonstrates that regular walking for 30 minutes can improve energy levels and reduce joint stiffness."
+        ];
 
         const MenopauseTracker = () => {
             const [entries, setEntries] = useState([]);
@@ -85,6 +70,12 @@
                 'Stress', 'Heat', 'Spicy Food', 'Alcohol', 'Caffeine', 'Exercise', 'Lack of Sleep', 'Work Pressure'
             ];
 
+            const getTodaysTip = () => {
+                const today = new Date();
+                const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+                return dailyTips[dayOfYear % dailyTips.length];
+            };
+
             // Load/Save data from localStorage
             useEffect(() => {
                 try {
@@ -102,17 +93,13 @@
                             }, 5000);
                         }
                     }
-                } catch (e) { 
-                    console.log('Loading data...'); 
-                }
+                } catch (e) { console.log('Loading data...'); }
             }, []);
 
             useEffect(() => {
                 try {
                     localStorage.setItem('menopause-tracker-data', JSON.stringify(entries));
-                } catch (e) { 
-                    console.log('Saving data...'); 
-                }
+                } catch (e) { console.log('Saving data...'); }
             }, [entries]);
 
             useEffect(() => {
@@ -120,9 +107,7 @@
                 setCurrentEntry(todayEntry || {
                     date: selectedDate,
                     symptoms: symptoms.reduce((acc, s) => ({ ...acc, [s.id]: 0 }), {}),
-                    mood: 3, 
-                    triggers: [], 
-                    notes: ''
+                    mood: 3, triggers: [], notes: ''
                 });
             }, [selectedDate, entries]);
 
@@ -365,6 +350,17 @@
                             <p className="text-gray-600">Track symptoms • Discover patterns • Feel empowered</p>
                         </div>
 
+                        {/* Daily Tip */}
+                        <div className="text-white rounded-2xl shadow-lg p-6 mb-6" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+                            <div className="flex items-start gap-3">
+                                <div className="text-2xl">💡</div>
+                                <div>
+                                    <h3 className="font-semibold mb-2">Today's Evidence-Based Tip</h3>
+                                    <p className="text-sm leading-relaxed opacity-95">{getTodaysTip()}</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Date Navigation */}
                         <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">
                             <div className="flex items-center justify-between">
@@ -512,7 +508,6 @@
             );
         };
 
-        // Wait for React to load, then render
         function renderApp() {
             if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
                 ReactDOM.render(React.createElement(MenopauseTracker), document.getElementById('root'));
