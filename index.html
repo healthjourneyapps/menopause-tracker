@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Menopause Journey - Symptom Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body { -webkit-overflow-scrolling: touch; overscroll-behavior: none; }
+        button, input[type="range"] { touch-action: manipulation; }
+        .data-warning {
+            position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.8);
+            color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 12px; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <div id="data-notification" class="data-warning" style="display: none;">
+        📱 Bookmark this page to keep your data! Instructions in the Setup button.
+    </div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronLeft, ChevronRight, BarChart3, FileDown } = lucide;
+
+        const MenopauseTracker = () => {
+            const [entries, setEntries] = useState([]);
+            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            const [currentEntry, setCurrentEntry] = useState(null);
+            const [showTrends, setShowTrends] = useState(false);
+            const [showInstructions, setShowInstructions] = useState(false);
+
+            const symptoms = [
+                { id: 'hotFlashes', label: 'Hot Flashes', icon: '🔥', color: 'bg-red-100 border-red-300' },
+                { id: 'sleep', label: 'Sleep Quality', icon: '😴', color: 'bg-blue-100 border-blue-300' },
+                { id: 'mood', label: 'Overall Mood', icon: '😊', color: 'bg-yellow-100 border-yellow-300' },
+                { id: 'brainFog', label: 'Brain Fog', icon: '🌫️', color: 'bg-gray-100 border-gray-300' },
+                { id: 'irritability', label: 'Irritability', icon: '😤', color: 'bg-orange-100 border-orange-300' },
+                { id: 'energy', label: 'Energy Level', icon: '⚡', color: 'bg-green-100 border-green-300' },
+                { id: 'jointAches', label: 'Joint Aches', icon: '🦴', color: 'bg-purple-100 border-purple-300' },
+                { id: 'heartPalpitations', label: 'Heart Racing', icon: '💓', color: 'bg-pink-100 border-pink-300' }
+            ];
+
+            const moodOptions = [
+                { value: 5, emoji: '😊', label: 'Great', color: 'text-green-500' },
+                { value: 4, emoji: '🙂', label: 'Good', color: 'text-lime-500' },
+                { value: 3, emoji: '😐', label: 'Okay', color: 'text-yellow-500' },
+                { value: 2, emoji: '😔', label: 'Low', color: 'text-orange-500' },
+                { value: 1, emoji: '😭', label: 'Awful', color: 'text-red-500' }
+            ];
+
+            const triggers = [
+                'Stress', 'Heat', 'Spicy Food', 'Alcohol', 'Caffeine', 'Exercise', 'Lack of Sleep', 'Work Pressure'
+            ];
+
+            // Load/Save data from localStorage
+            useEffect(() => {
+                try {
+                    const saved = localStorage.getItem('menopause-tracker-data');
+                    if (saved) setEntries(JSON.parse(saved));
+                    
+                    const hasSeenWarning = localStorage.getItem('menopause-seen-warning');
+                    if (!hasSeenWarning) {
+                        document.getElementById('data-notification').style.display = 'block';
+                        setTimeout(() => {
+                            document.getElementById('data-notification').style.display = 'none';
+                            localStorage.setItem('menopause-seen-warning', 'true');
+                        }, 5000);
+                    }
+                } catch (e) { console.error('Loading error:', e); }
+            }, []);
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('menopause-tracker-data', JSON.stringify(entries));
+                } catch (e) { console.error('Saving error:', e); }
+            }, [entries]);
+
+            useEffect(() => {
+                const todayEntry = entries.find(entry => entry.date === selectedDate);
+                setCurrentEntry(todayEntry || {
+                    date: selectedDate,
+                    symptoms: symptoms.reduce((acc, s) => ({ ...acc, [s.id]: 0 }), {}),
+                    mood: 3, triggers: [], notes: ''
+                });
+            }, [selectedDate, entries]);
+
+            const updateSymptom = (symptomId, value) => {
+                const updated = { ...currentEntry, symptoms: { ...currentEntry.symptoms, [symptomId]: value }};
+                setCurrentEntry(updated);
+                saveEntry(updated);
+            };
+
+            const updateMood = (mood) => {
+                const updated = { ...currentEntry, mood };
+                setCurrentEntry(updated);
+                saveEntry(updated);
+            };
+
+            const toggleTrigger = (trigger) => {
+                const triggers = currentEntry.triggers.includes(trigger)
+                    ? currentEntry.triggers.filter(t => t !== trigger)
+                    : [...currentEntry.triggers, trigger];
+                const updated = { ...currentEntry, triggers };
+                setCurrentEntry(updated);
+                saveEntry(updated);
+            };
+
+            const updateNotes = (notes) => {
+                const updated = { ...currentEntry, notes };
+                setCurrentEntry(updated);
+                saveEntry(updated);
+            };
+
+            const saveEntry = (entry) => {
+                const index = entries.findIndex(e => e.date === entry.date);
+                const newEntries = index >= 0 ? [...entries] : [...entries, entry];
+                if (index >= 0) newEntries[index] = entry;
+                setEntries(newEntries);
+            };
+
+            const exportData = () => {
+                if (entries.length === 0) {
+                    alert('No data to export yet. Track some symptoms first!');
+                    return;
+                }
+
+                const csv = entries.sort((a, b) => new Date(a.date) - new Date(b.date)).map(entry => ({
+                    Date: entry.date,
+                    'Hot Flashes (0-5)': entry.symptoms.hotFlashes || 0,
+                    'Sleep Quality (0-5)': entry.symptoms.sleep || 0,
+                    'Mood (1-5)': entry.mood || 3,
+                    'Brain Fog (0-5)': entry.symptoms.brainFog || 0,
+                    'Irritability (0-5)': entry.symptoms.irritability || 0,
+                    'Energy Level (0-5)': entry.symptoms.energy || 0,
+                    'Joint Aches (0-5)': entry.symptoms.jointAches || 0,
+                    'Heart Racing (0-5)': entry.symptoms.heartPalpitations || 0,
+                    'Triggers': (entry.triggers || []).join('; '),
+                    'Notes': entry.notes || ''
+                }));
+
+                const csvText = [
+                    Object.keys(csv[0]).join(','),
+                    ...csv.map(row => Object.values(row).map(v => `"${v}"`).join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvText], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `menopause-symptoms-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('✅ Data exported! Check your downloads. Share this file with your doctor.');
+            };
+
+            const changeDate = (days) => {
+                const date = new Date(selectedDate);
+                date.setDate(date.getDate() + days);
+                setSelectedDate(date.toISOString().split('T')[0]);
+            };
+
+            const getSymptomTrend = (symptomId) => {
+                const recent = entries.filter(e => e.date <= selectedDate).slice(-7);
+                if (recent.length < 3) return null;
+                const values = recent.map(e => e.symptoms[symptomId] || 0);
+                const first = values.slice(0, Math.ceil(values.length/2)).reduce((a,b) => a+b, 0) / Math.ceil(values.length/2);
+                const last = values.slice(Math.floor(values.length/2)).reduce((a,b) => a+b, 0) / (values.length - Math.floor(values.length/2));
+                return last > first + 0.5 ? 'up' : last < first - 0.5 ? 'down' : 'stable';
+            };
+
+            const IntensitySlider = ({ symptom, value, onChange }) => (
+                <div className={`p-4 rounded-xl border-2 ${symptom.color} transition-all hover:shadow-md`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">{symptom.icon}</span>
+                            <span className="font-medium text-gray-800">{symptom.label}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-gray-600">{value}/5</span>
+                            {getSymptomTrend(symptom.id) === 'up' && <span className="text-red-500" title="Getting worse">↗</span>}
+                            {getSymptomTrend(symptom.id) === 'down' && <span className="text-green-500" title="Getting better">↘</span>}
+                        </div>
+                    </div>
+                    <div className="flex gap-1">
+                        {[1,2,3,4,5].map(level => (
+                            <button
+                                key={level}
+                                onClick={() => onChange(symptom.id, level)}
+                                className={`flex-1 h-8 rounded transition-all ${
+                                    value >= level ? 'bg-gradient-to-t from-red-400 to-red-300 shadow-sm' : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>None</span>
+                        <span>Severe</span>
+                    </div>
+                </div>
+            );
+
+            if (showInstructions) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 p-4">
+                        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">📱 How to Keep Your Data Safe</h2>
+                            
+                            <div className="space-y-4">
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-blue-800 mb-2">📌 On iPhone/iPad:</h3>
+                                    <ol className="list-decimal list-inside text-blue-700 space-y-1 text-sm">
+                                        <li>Tap the "Share" button (square with arrow up)</li>
+                                        <li>Scroll down and select "Add to Home Screen"</li>
+                                        <li>Tap "Add" - now you have an app icon!</li>
+                                    </ol>
+                                </div>
+                                
+                                <div className="bg-green-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-green-800 mb-2">📌 On Android:</h3>
+                                    <ol className="list-decimal list-inside text-green-700 space-y-1 text-sm">
+                                        <li>Tap menu (three dots) in browser</li>
+                                        <li>Select "Add to Home screen"</li>
+                                        <li>Confirm - access like any app!</li>
+                                    </ol>
+                                </div>
+                                
+                                <div className="bg-purple-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-purple-800 mb-2">📌 On Computer:</h3>
+                                    <ol className="list-decimal list-inside text-purple-700 space-y-1 text-sm">
+                                        <li>Bookmark this page (Ctrl+D)</li>
+                                        <li>Always use the same browser</li>
+                                        <li>Don't clear browser data</li>
+                                    </ol>
+                                </div>
+                                
+                                <div className="bg-red-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-red-800 mb-2">⚠️ Important:</h3>
+                                    <ul className="list-disc list-inside text-red-700 space-y-1 text-sm">
+                                        <li>Always use same device/browser</li>
+                                        <li>Don't use Private/Incognito mode</li>
+                                        <li>Export data regularly as backup</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <button
+                                onClick={() => setShowInstructions(false)}
+                                className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-medium"
+                            >
+                                Start Tracking My Symptoms
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (showTrends) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 p-4">
+                        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800">📊 Your Patterns</h2>
+                                <button onClick={() => setShowTrends(false)} className="bg-purple-600 text-white px-4 py-2 rounded-lg">
+                                    Back
+                                </button>
+                            </div>
+                            
+                            {entries.length < 3 ? (
+                                <div className="text-center py-12">
+                                    <div className="text-6xl mb-4">📈</div>
+                                    <h3 className="text-xl font-semibold text-gray-600 mb-2">Track a few more days to see patterns!</h3>
+                                    <p className="text-gray-500">Trends become visible after 3-5 days of tracking.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                        {symptoms.map(symptom => {
+                                            const avg = entries.length > 0 ? 
+                                                (entries.reduce((sum, e) => sum + (e.symptoms[symptom.id] || 0), 0) / entries.length).toFixed(1) : 0;
+                                            return (
+                                                <div key={symptom.id} className={`p-4 rounded-xl ${symptom.color}`}>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xl">{symptom.icon}</span>
+                                                        <span className="font-medium">{symptom.label}</span>
+                                                    </div>
+                                                    <div className="text-3xl font-bold text-gray-800">{avg}/5</div>
+                                                    <div className="text-sm text-gray-600">Average over {entries.length} days</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-4">🔍 Your Most Common Triggers</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {triggers.map(trigger => {
+                                                const count = entries.reduce((sum, entry) => 
+                                                    sum + ((entry.triggers || []).includes(trigger) ? 1 : 0), 0
+                                                );
+                                                return (
+                                                    <div key={trigger} className="bg-orange-100 p-3 rounded-lg text-center">
+                                                        <div className="font-bold text-lg">{count}</div>
+                                                        <div className="text-sm text-gray-600">{trigger}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+                    <div className="max-w-lg mx-auto p-4">
+                        <div className="text-center mb-6">
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">My Menopause Journey</h1>
+                            <p className="text-gray-600">Track symptoms • Discover patterns • Feel empowered</p>
+                        </div>
+
+                        {/* Date Navigation */}
+                        <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">
+                            <div className="flex items-center justify-between">
+                                <button onClick={() => changeDate(-1)} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <div className="text-center">
+                                    <div className="text-lg font-semibold text-gray-800">
+                                        {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="text-sm text-purple-600 bg-transparent border-none"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={() => changeDate(1)} 
+                                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                                    disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            <button
+                                onClick={() => setShowTrends(true)}
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-1 text-sm"
+                            >
+                                <BarChart3 className="w-4 h-4" />
+                                Trends
+                            </button>
+                            <button
+                                onClick={exportData}
+                                className="bg-white text-purple-600 py-3 rounded-xl font-medium flex items-center justify-center gap-1 shadow-lg text-sm"
+                            >
+                                <FileDown className="w-4 h-4" />
+                                Export
+                            </button>
+                            <button
+                                onClick={() => setShowInstructions(true)}
+                                className="bg-blue-500 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-1 text-sm"
+                            >
+                                📱 Setup
+                            </button>
+                        </div>
+
+                        {/* Mood Selector */}
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-800">How are you feeling today?</h3>
+                            <div className="flex justify-between">
+                                {moodOptions.map(option => (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => updateMood(option.value)}
+                                        className={`flex flex-col items-center p-3 rounded-xl transition-all ${
+                                            currentEntry?.mood === option.value 
+                                                ? 'bg-purple-100 ring-2 ring-purple-500 scale-110' 
+                                                : 'hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <span className="text-3xl mb-1">{option.emoji}</span>
+                                        <span className={`text-xs font-medium ${option.color}`}>{option.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Symptom Trackers */}
+                        <div className="space-y-4 mb-6">
+                            {symptoms.map(symptom => (
+                                <IntensitySlider
+                                    key={symptom.id}
+                                    symptom={symptom}
+                                    value={currentEntry?.symptoms[symptom.id] || 0}
+                                    onChange={updateSymptom}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Triggers */}
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-800">What might have triggered symptoms?</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {triggers.map(trigger => (
+                                    <button
+                                        key={trigger}
+                                        onClick={() => toggleTrigger(trigger)}
+                                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                            currentEntry?.triggers.includes(trigger)
+                                                ? 'bg-orange-500 text-white shadow-md'
+                                                : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                                        }`}
+                                    >
+                                        {trigger}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-800">Notes for today</h3>
+                            <textarea
+                                value={currentEntry?.notes || ''}
+                                onChange={(e) => updateNotes(e.target.value)}
+                                placeholder="How did you sleep? What helped? Any observations..."
+                                className="w-full h-24 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
+
+                        {/* Stats */}
+                        {entries.length > 0 && (
+                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg p-6 text-white mb-6">
+                                <h3 className="text-lg font-semibold mb-4">Your Journey So Far</h3>
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                    <div>
+                                        <div className="text-2xl font-bold">{entries.length}</div>
+                                        <div className="text-sm opacity-90">Days Tracked</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold">
+                                            {(entries.reduce((sum, e) => sum + e.mood, 0) / entries.length).toFixed(1)}
+                                        </div>
+                                        <div className="text-sm opacity-90">Average Mood</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="bg-white rounded-xl p-4 text-center text-sm text-gray-600">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <span>🔒</span>
+                                <span className="font-medium">100% Private - Data stays on your device</span>
+                            </div>
+                            <p className="text-xs">Bookmark this page or add to home screen!</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(MenopauseTracker), document.getElementById('root'));
+    </script>
+</body>
+</html>
