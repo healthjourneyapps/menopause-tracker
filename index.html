@@ -54,22 +54,15 @@
             const [showInstructions, setShowInstructions] = useState(false);
 
             const symptoms = [
-                    { id: 'hotFlashes', label: 'Hot Flashes', icon: '🔥', color: 'bg-red-100 border-red-300', 
-      leftLabel: 'None', rightLabel: 'Severe' },
-    { id: 'sleep', label: 'Sleep Quality', icon: '😴', color: 'bg-blue-100 border-blue-300', 
-      leftLabel: 'Terrible', rightLabel: 'Excellent' },
-    { id: 'mood', label: 'Overall Mood', icon: '😊', color: 'bg-yellow-100 border-yellow-300', 
-      leftLabel: 'Awful', rightLabel: 'Great' },
-    { id: 'brainFog', label: 'Brain Fog', icon: '🌫️', color: 'bg-gray-100 border-gray-300', 
-      leftLabel: 'Clear', rightLabel: 'Severe' },
-    { id: 'irritability', label: 'Irritability', icon: '😤', color: 'bg-orange-100 border-orange-300', 
-      leftLabel: 'Calm', rightLabel: 'High' },
-    { id: 'energy', label: 'Energy Level', icon: '⚡', color: 'bg-green-100 border-green-300', 
-      leftLabel: 'Exhausted', rightLabel: 'Energized' },
-    { id: 'jointAches', label: 'Joint Aches', icon: '🦴', color: 'bg-purple-100 border-purple-300', 
-      leftLabel: 'None', rightLabel: 'Severe' },
-    { id: 'heartPalpitations', label: 'Heart Racing', icon: '💓', color: 'bg-pink-100 border-pink-300', 
-      leftLabel: 'Normal', rightLabel: 'Racing' }
+ { id: 'hotFlashes', label: 'Hot Flashes', icon: '🔥', color: 'bg-red-100 border-red-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'sleepProblems', label: 'Sleep Problems', icon: '😴', color: 'bg-blue-100 border-blue-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'moodIssues', label: 'Mood Issues', icon: '😊', color: 'bg-yellow-100 border-yellow-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'brainFog', label: 'Brain Fog', icon: '🌫️', color: 'bg-gray-100 border-gray-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'irritability', label: 'Irritability', icon: '😤', color: 'bg-orange-100 border-orange-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'fatigue', label: 'Fatigue', icon: '⚡', color: 'bg-green-100 border-green-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'jointAches', label: 'Joint Aches', icon: '🦴', color: 'bg-purple-100 border-purple-300', leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'heartPalpitations', label: 'Heart Racing', icon: '💓', color: 'bg-pink-100 border-pink-300', leftLabel: 'None', rightLabel: 'Severe' }
+
             ];
 
             const moodOptions = [
@@ -168,11 +161,11 @@
                 const csv = entries.sort((a, b) => new Date(a.date) - new Date(b.date)).map(entry => ({
                     Date: entry.date,
                     'Hot Flashes (0-5)': entry.symptoms?.hotFlashes || 0,
-                    'Sleep Quality (0-5)': entry.symptoms?.sleep || 0,
-                    'Mood (1-5)': entry.mood || 3,
+                    'Sleep Problems (0-5)': entry.symptoms?.sleepProblems || 0,
+                    'Mood Issues (0-5)': entry.symptoms?.moodIssues || 0,
                     'Brain Fog (0-5)': entry.symptoms?.brainFog || 0,
                     'Irritability (0-5)': entry.symptoms?.irritability || 0,
-                    'Energy Level (0-5)': entry.symptoms?.energy || 0,
+                    'Fatigue (0-5)': entry.symptoms?.fatigue || 0,
                     'Joint Aches (0-5)': entry.symptoms?.jointAches || 0,
                     'Heart Racing (0-5)': entry.symptoms?.heartPalpitations || 0,
                     'Triggers': (entry.triggers || []).join('; '),
@@ -237,7 +230,7 @@
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
                          <span>{symptom.leftLabel}</span>
-    <span>{symptom.rightLabel}</span>
+                        <span>{symptom.rightLabel}</span>
                     </div>
                 </div>
             );
