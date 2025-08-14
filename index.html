@@ -518,7 +518,7 @@
     </div>
     <textarea
         value={currentEntry?.notes || ''}
-        onChange={(e) => update
+        onChange={(e) => updateNotes(e.target.value)}
 
                         {/* Stats */}
                         {entries.length > 0 && (
