@@ -54,14 +54,22 @@
             const [showInstructions, setShowInstructions] = useState(false);
 
             const symptoms = [
-                { id: 'hotFlashes', label: 'Hot Flashes', icon: '🔥', color: 'bg-red-100 border-red-300' },
-                { id: 'sleep', label: 'Sleep Quality', icon: '😴', color: 'bg-blue-100 border-blue-300' },
-                { id: 'mood', label: 'Overall Mood', icon: '😊', color: 'bg-yellow-100 border-yellow-300' },
-                { id: 'brainFog', label: 'Brain Fog', icon: '🌫️', color: 'bg-gray-100 border-gray-300' },
-                { id: 'irritability', label: 'Irritability', icon: '😤', color: 'bg-orange-100 border-orange-300' },
-                { id: 'energy', label: 'Energy Level', icon: '⚡', color: 'bg-green-100 border-green-300' },
-                { id: 'jointAches', label: 'Joint Aches', icon: '🦴', color: 'bg-purple-100 border-purple-300' },
-                { id: 'heartPalpitations', label: 'Heart Racing', icon: '💓', color: 'bg-pink-100 border-pink-300' }
+                    { id: 'hotFlashes', label: 'Hot Flashes', icon: '🔥', color: 'bg-red-100 border-red-300', 
+      leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'sleep', label: 'Sleep Quality', icon: '😴', color: 'bg-blue-100 border-blue-300', 
+      leftLabel: 'Terrible', rightLabel: 'Excellent' },
+    { id: 'mood', label: 'Overall Mood', icon: '😊', color: 'bg-yellow-100 border-yellow-300', 
+      leftLabel: 'Awful', rightLabel: 'Great' },
+    { id: 'brainFog', label: 'Brain Fog', icon: '🌫️', color: 'bg-gray-100 border-gray-300', 
+      leftLabel: 'Clear', rightLabel: 'Severe' },
+    { id: 'irritability', label: 'Irritability', icon: '😤', color: 'bg-orange-100 border-orange-300', 
+      leftLabel: 'Calm', rightLabel: 'High' },
+    { id: 'energy', label: 'Energy Level', icon: '⚡', color: 'bg-green-100 border-green-300', 
+      leftLabel: 'Exhausted', rightLabel: 'Energized' },
+    { id: 'jointAches', label: 'Joint Aches', icon: '🦴', color: 'bg-purple-100 border-purple-300', 
+      leftLabel: 'None', rightLabel: 'Severe' },
+    { id: 'heartPalpitations', label: 'Heart Racing', icon: '💓', color: 'bg-pink-100 border-pink-300', 
+      leftLabel: 'Normal', rightLabel: 'Racing' }
             ];
 
             const moodOptions = [
@@ -228,8 +236,8 @@
                         ))}
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>None</span>
-                        <span>Severe</span>
+                         <span>{symptom.leftLabel}</span>
+    <span>{symptom.rightLabel}</span>
                     </div>
                 </div>
             );
@@ -393,7 +401,17 @@
                                 </div>
                                 <button 
                                     onClick={() => changeDate(1)} 
-                                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                                    className={`p-2 rounded-lg ${
+    selectedDate >= (() => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    })() 
+        ? 'text-gray-400 cursor-not-allowed' 
+        : 'text-purple-600 hover:bg-purple-50'
+}`}
                                    disabled={selectedDate >= (() => {
     const today = new Date();
     const year = today.getFullYear();
