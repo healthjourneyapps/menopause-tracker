@@ -65,13 +65,13 @@
 
             ];
 
-            const moodOptions = [
-                { value: 5, emoji: '😊', label: 'Great', color: 'text-green-500' },
-                { value: 4, emoji: '🙂', label: 'Good', color: 'text-lime-500' },
-                { value: 3, emoji: '😐', label: 'Okay', color: 'text-yellow-500' },
-                { value: 2, emoji: '😔', label: 'Low', color: 'text-orange-500' },
-                { value: 1, emoji: '😭', label: 'Awful', color: 'text-red-500' }
-            ];
+const moodOptions = [
+    { value: 0, emoji: '😊', label: 'Great', color: 'text-green-500' },
+    { value: 1, emoji: '🙂', label: 'Good', color: 'text-lime-500' },
+    { value: 2, emoji: '😐', label: 'Okay', color: 'text-yellow-500' },
+    { value: 3, emoji: '😔', label: 'Low', color: 'text-orange-500' },
+    { value: 4, emoji: '😭', label: 'Awful', color: 'text-red-500' }
+];
 
             const triggers = [
                 'Stress', 'Heat', 'Spicy Food', 'Alcohol', 'Caffeine', 'Exercise', 'Lack of Sleep', 'Work Pressure'
@@ -114,7 +114,7 @@
                 setCurrentEntry(todayEntry || {
                     date: selectedDate,
                     symptoms: symptoms.reduce((acc, s) => ({ ...acc, [s.id]: 0 }), {}),
-                    mood: 3, triggers: [], notes: ''
+                    mood: 2, triggers: [], notes: ''
                 });
             }, [selectedDate, entries]);
 
@@ -305,7 +305,7 @@
                                 <div className="text-center py-12">
                                     <div className="text-6xl mb-4">📈</div>
                                     <h3 className="text-xl font-semibold text-gray-600 mb-2">Track a few more days to see patterns!</h3>
-                                    <p className="text-gray-500">Trends become visible after 3-5 days of tracking.</p>
+                                    <p className="text-gray-500">Track symptoms for 3+ days to see meaningful patterns and averages.</p>
                                 </div>
                             ) : (
                                 <>
