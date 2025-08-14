@@ -380,6 +380,13 @@
                                     <input
                                         type="date"
                                         value={selectedDate}
+                                         max={(() => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    })()}
                                         onChange={(e) => setSelectedDate(e.target.value)}
                                         className="text-sm text-purple-600 bg-transparent border-none"
                                     />
@@ -387,7 +394,13 @@
                                 <button 
                                     onClick={() => changeDate(1)} 
                                     className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
-                                    disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+                                   disabled={selectedDate >= (() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+})()}
                                 >
                                     <ChevronRight />
                                 </button>
